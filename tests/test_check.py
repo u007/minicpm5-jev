@@ -1,5 +1,6 @@
 import http.server
 import json
+import socket
 import threading
 from pathlib import Path
 
@@ -45,14 +46,14 @@ def test_check_prompt_accepts_real_rendered_prompt():
 
 
 def test_check_prompt_rejects_unclosed_think():
-    prompt = f"<|im_start|>assistant\n<think>\nreasoning\n{ANSWER}"
-    with pytest.raises(PreflightError):
+    prompt = f"<|im_start|>assistant\n<think>\n<think>\n\n</think>\n\n{ANSWER}"
+    with pytest.raises(PreflightError, match="unclosed"):
         check_prompt(prompt)
 
 
 def test_check_prompt_rejects_missing_answer_suffix():
     prompt = "<|im_start|>assistant\n<think>\n\n</think>\n\nNot the answer"
-    with pytest.raises(PreflightError):
+    with pytest.raises(PreflightError, match="does not end with"):
         check_prompt(prompt)
 
 
@@ -97,3 +98,12 @@ def test_check_health_rejects_mismatched_model():
     finally:
         server.shutdown()
         server.server_close()
+
+
+def test_check_health_rejects_unreachable_server():
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.bind(("127.0.0.1", 0))
+    port = sock.getsockname()[1]
+    sock.close()  # port is free again, so the request below hits a closed connection
+    with pytest.raises(PreflightError, match="failed"):
+        check_health(f"http://127.0.0.1:{port}/health", "/models/expected")

@@ -7,6 +7,7 @@ import argparse
 import json
 import re
 import sys
+import urllib.error
 import urllib.request
 from pathlib import Path
 
@@ -58,8 +59,11 @@ def check_prompt(prompt: str) -> None:
 
 
 def check_health(url, expected_model) -> None:
-    with urllib.request.urlopen(url) as resp:
-        body = json.load(resp)
+    try:
+        with urllib.request.urlopen(url) as resp:
+            body = json.load(resp)
+    except (urllib.error.URLError, json.JSONDecodeError) as e:
+        raise PreflightError(f"GET {url} failed: {e}") from e
     if body.get("model") != expected_model:
         raise PreflightError(f"health reports model {body.get('model')!r}, expected {expected_model!r}")
 
@@ -71,20 +75,8 @@ def main() -> None:
 
     preset = load_preset()
     model_dir = preset["model_dir"]
-    tokenizer = AutoTokenizer.from_pretrained(model_dir)
-    _, probe, _ = render(tokenizer, "x", {"q": {"type": "noul"}}, ["A", "B"], preset["prompt"])
-    probe_prompt = probe["q"][0]
 
-    checks = [
-        ("revision", lambda: check_revision(model_dir, preset["revision"])),
-        ("labels", lambda: check_labels(tokenizer, probe_prompt)),
-        ("prompt", lambda: check_prompt(probe_prompt)),
-    ]
-    if args.health:
-        url = f"http://{preset['host']}:{preset['port']}/health"
-        checks.append(("health", lambda: check_health(url, model_dir)))
-
-    for name, fn in checks:
+    def run(name, fn):
         try:
             result = fn()
         except PreflightError as e:
@@ -92,6 +84,19 @@ def main() -> None:
             sys.exit(1)
         suffix = f" (labels={result})" if name == "labels" else ""
         print(f"{name}: ok{suffix}")
+        return result
+
+    run("revision", lambda: check_revision(model_dir, preset["revision"]))
+
+    tokenizer = AutoTokenizer.from_pretrained(model_dir)
+    _, probe, _ = render(tokenizer, "x", {"q": {"type": "noul"}}, ["A", "B"], preset["prompt"])
+    probe_prompt = probe["q"][0]
+
+    run("labels", lambda: check_labels(tokenizer, probe_prompt))
+    run("prompt", lambda: check_prompt(probe_prompt))
+    if args.health:
+        url = f"http://{preset['host']}:{preset['port']}/health"
+        run("health", lambda: check_health(url, model_dir))
 
 
 if __name__ == "__main__":
