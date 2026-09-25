@@ -65,8 +65,10 @@ checks and evaluation.
 It loads the model's tokenizer and chat template through llm2jev's own prompt
 path (the same render function the server uses). It fails if:
 
-1. Any option letter llm2jev can use (A–Z, its full label set, not only
-   the 6 JevBench needs) does not encode to exactly one token.
+1. llm2jev's own `find_labels` raises when run on the MiniCPM5 tokenizer.
+   It looks for 255 labels (A..Z, then AA..) that are each a single token
+   right after the real prompt ending. The check calls that function
+   rather than reimplementing it, and reports how many labels it found.
 2. The rendered prompt contains `<think>`, or does not end at the assistant
    generation prompt.
 3. When a server is running, `/health` reports a model id different from
