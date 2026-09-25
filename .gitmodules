@@ -1,3 +1,4 @@
 [submodule "vendor/jevbench"]
 	path = vendor/jevbench
 	url = https://github.com/fstandhartinger/jevbench
+	ignore = untracked
