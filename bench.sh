@@ -90,22 +90,29 @@ mkdir -p "$SMOKE_DIR"
 uv run python smoke_tasks.py "$SMOKE_DIR/tasks.jsonl"
 run_jevbench "$SMOKE_DIR/tasks.jsonl" "$SMOKE_DIR"
 
-smoke_failures="$(uv run python -c "
+if ! smoke_failures="$(uv run python -c "
 import json
 for line in open('$SMOKE_DIR/results.jsonl'):
     r = json.loads(line)
     if not r['ok']:
         print(json.dumps(r))
-")"
+")"; then
+    echo "bench.sh: step 'smoke' failed: could not inspect $SMOKE_DIR/results.jsonl; log: $RUN_DIR/server.log" >&2
+    exit 1
+fi
 if [[ -n "$smoke_failures" ]]; then
     echo "bench.sh: step 'smoke' failed: item(s) with ok=false; log: $RUN_DIR/server.log" >&2
     echo "$smoke_failures" >&2
     exit 1
 fi
 
+server_alive() {
+    kill -0 "$SERVER_PID" 2>/dev/null && curl -sf --max-time 5 "$HEALTH_URL" >/dev/null 2>&1
+}
+
 for TIER in original easy hard; do
     run_jevbench "vendor/jevbench/datasets/public/$TIER.jsonl" "$RUN_DIR/$TIER"
-    if ! kill -0 "$SERVER_PID" 2>/dev/null; then
+    if ! server_alive; then
         echo "bench.sh: step 'tier $TIER' failed: server died; log: $RUN_DIR/server.log" >&2
         exit 1
     fi
