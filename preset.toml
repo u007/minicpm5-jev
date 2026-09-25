@@ -1,0 +1,6 @@
+model_id = "mlx-community/MiniCPM5-2B-8bit"
+revision = "2d20e8e672ce892d50f7265bfd3fc9b59b718f2a"
+backend = "mlx"
+prompt = "chat"
+host = "127.0.0.1"
+port = 8080

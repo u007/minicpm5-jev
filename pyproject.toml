@@ -1,0 +1,26 @@
+[project]
+name = "minicpm5-jev"
+version = "0.1.0"
+requires-python = ">=3.12"
+dependencies = [
+    "llm2jev[mlx]==0.6.1",
+    "mlx-lm==0.31.3",
+    "transformers==5.17.0",
+    "huggingface_hub==1.33.0",
+    "jevbench",
+]
+
+[dependency-groups]
+dev = [
+    "pytest",
+]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+jevbench = { path = "vendor/jevbench" }
+
+[tool.pytest.ini_options]
+pythonpath = ["."]
+testpaths = ["tests"]
