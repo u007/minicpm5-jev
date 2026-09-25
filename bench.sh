@@ -8,7 +8,7 @@ RUN_NAME="${1:-$(date +%Y-%m-%d)-minicpm5-2b-8bit}"
 RUN_DIR="$REPO_ROOT/results/$RUN_NAME"
 
 if [[ -e "$RUN_DIR" ]]; then
-    echo "bench.sh: step 'run dir check' failed: $RUN_DIR already exists" >&2
+    echo "bench.sh: step 'run dir check' failed: $RUN_DIR already exists; delete it to rerun" >&2
     exit 1
 fi
 
