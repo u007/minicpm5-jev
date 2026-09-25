@@ -55,6 +55,10 @@ Out of scope:
 | `fetch_model.sh` | Downloads the model at the preset revision (`hf download --revision`) to a local directory. `serve.sh` and `check.py` pass that path as `--model`, so the weights can't drift. |
 | `serve.sh` | Runs the llm2jev CLI with values from the preset. No wrapper code. |
 | `check.py` | Preflight checks (see below). Exits non-zero on any failure. |
+| `preset.py` | Loads `preset.toml`; prints single values for the shell scripts. |
+| `smoke_tasks.py` | Picks the first public item of each question type for the smoke test. |
+| `env_info.py` | Collects the `env.json` fields. |
+| `reference_rows.json` | The llm2jev Qwen reference rows, with their source and caveat. |
 | `bench.sh` | End-to-end bench run (see Eval flow). |
 | `results/<YYYY-MM-DD>-minicpm5-2b-8bit/` | Raw responses, per-file `results.jsonl`, ledger, `summary.json`, `env.json`. Committed. |
 | `make_results.py` | Builds `summary.json` and `RESULTS.md` from the run's task and result files (see Results table). |
