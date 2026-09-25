@@ -73,10 +73,17 @@ path (the same render function the server uses). It fails if:
    It looks for 255 labels (A..Z, then AA..) that are each a single token
    right after the real prompt ending. The check calls that function
    rather than reimplementing it, and reports how many labels it found.
-2. The rendered prompt contains `<think>`, or does not end at the assistant
-   generation prompt.
+2. The rendered prompt leaves a thinking block open, or does not end with
+   llm2jev's answer prefill. With `enable_thinking=False`, MiniCPM5's
+   template (`chat_template.jinja:172`) emits an empty closed block
+   `<think>\n\n</think>\n\n`, which is correct. So the rule is: every
+   `<think>` after the assistant turn starts must be closed by `</think>`,
+   and the prompt must end with `</think>\n\n` followed by llm2jev's
+   `ANSWER` constant (`"Answer:"`).
 3. When a server is running, `/health` reports a model id different from
-   the preset.
+   the local model path that `serve.sh` passes. llm2jev reports the
+   `--model` value it was given, and the MLX backend loads whatever
+   `--served-model-name` names, so a friendlier name can't be used.
 
 ## Eval flow (`bench.sh`)
 
@@ -135,8 +142,10 @@ pipeline, is optional and not part of this spec's success criteria.
 
 `pytest`. The tests run offline once the tokenizer is cached.
 
-- Preflight logic, tested against the real MiniCPM5 tokenizer: single-token
-  letters, and no `<think>` in the rendered prompt.
+- Preflight logic, tested against the real MiniCPM5 tokenizer: labels are
+  found, and the rendered prompt ends with a closed empty thinking block
+  plus the answer prefill. Synthetic prompts with an open `<think>` must
+  fail the check.
 - `make_results.py`, tested against small fixtures of tasks and results:
   combined and per-tier numbers agree with `summarize.metric()`, and the
   Wilson interval matches known values.
