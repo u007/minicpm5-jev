@@ -6,6 +6,7 @@ Usage: uv run python check.py [--health]
 import argparse
 import json
 import re
+import socket
 import sys
 import urllib.error
 import urllib.request
@@ -60,12 +61,13 @@ def check_prompt(prompt: str) -> None:
 
 def check_health(url, expected_model) -> None:
     try:
-        with urllib.request.urlopen(url) as resp:
+        with urllib.request.urlopen(url, timeout=5) as resp:
             body = json.load(resp)
-    except (urllib.error.URLError, json.JSONDecodeError) as e:
+    except (urllib.error.URLError, socket.timeout, json.JSONDecodeError) as e:
         raise PreflightError(f"GET {url} failed: {e}") from e
-    if body.get("model") != expected_model:
-        raise PreflightError(f"health reports model {body.get('model')!r}, expected {expected_model!r}")
+    actual = body["model"]
+    if actual != expected_model:
+        raise PreflightError(f"health reports model {actual!r}, expected {expected_model!r}")
 
 
 def main() -> None:

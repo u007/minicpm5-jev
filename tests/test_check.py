@@ -2,6 +2,7 @@ import http.server
 import json
 import socket
 import threading
+import time
 from pathlib import Path
 
 import pytest
@@ -107,3 +108,22 @@ def test_check_health_rejects_unreachable_server():
     sock.close()  # port is free again, so the request below hits a closed connection
     with pytest.raises(PreflightError, match="failed"):
         check_health(f"http://127.0.0.1:{port}/health", "/models/expected")
+
+
+def test_check_health_rejects_server_that_accepts_but_never_responds():
+    listener = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    listener.bind(("127.0.0.1", 0))
+    listener.listen(1)
+    port = listener.getsockname()[1]
+
+    def accept_and_hang():
+        conn, _ = listener.accept()
+        time.sleep(10)  # outlives the 5s urlopen timeout under test
+        conn.close()
+
+    threading.Thread(target=accept_and_hang, daemon=True).start()
+    try:
+        with pytest.raises(PreflightError, match="failed"):
+            check_health(f"http://127.0.0.1:{port}/health", "/models/expected")
+    finally:
+        listener.close()
