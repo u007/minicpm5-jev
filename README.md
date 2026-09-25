@@ -22,7 +22,7 @@ This repo is MIT licensed (see `LICENSE`).
 ## Setup
 
 ```
-git clone --recurse-submodules <repo-url>
+git clone --recurse-submodules https://github.com/u007/minicpm5-jev
 cd minicpm5-jev
 uv sync
 ```
@@ -98,11 +98,22 @@ Response:
 
 See [RESULTS.md](./RESULTS.md) for the full table.
 
+The committed run (`results/2026-09-26-minicpm5-2b-8bit/`) took 3m16s wall
+time (`time bash bench.sh` measured 3:15.69) on an Apple M1 Max (32 GB).
+
 **This is not an official JevBench leaderboard score.** JevBench also has a
 sealed item set, run only by the JevBench maintainers, which is not included
 here — these numbers are the public-item subset only.
 
 **The Qwen3.5 reference rows in `RESULTS.md` are not like-for-like.** They
-were produced by `baby-jev`, a private harness, on A100 GPUs. The
-MiniCPM5-2B-8bit row here comes from the official `jevbench` harness on an
-Apple M1 Max (MLX). Treat the reference rows as context, not a comparison.
+were produced by `baby-jev`, a private harness, on A100 GPUs, per the
+[llm2jev README](https://github.com/tic-top/anyjev) and its
+[`scripts/bench.sh`](https://github.com/tic-top/anyjev/blob/main/scripts/bench.sh).
+The MiniCPM5-2B-8bit row here comes from the official `jevbench` harness on
+an Apple M1 Max (MLX). Treat the reference rows as context, not a comparison.
+
+**In the original tier, the model answered "no" on all 24 yes/no (`noul`)
+items**, scoring 12/24 — exactly chance, since the tier splits those items
+12 yes / 12 no. The hard tier's `noul` items get a mix of "yes" and "no"
+predictions, so this is model bias on the original tier, not a broken
+label mapping.
