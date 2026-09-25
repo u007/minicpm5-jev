@@ -29,7 +29,9 @@ command each:
   `{endpoint}/v1/systemone` and parses `answers.decision`, which matches the
   llm2jev response shape.
 - Reference numbers (llm2jev README, A100, public 231): Qwen3.5-4B 0.740,
-  Qwen3.5-9B 0.810, Qwen3.5-27B 0.879.
+  Qwen3.5-9B 0.810, Qwen3.5-27B 0.879. They were produced by baby-jev, a
+  harness that is now private, not by the official jevbench harness, so they
+  are context only, not a like-for-like comparison.
 
 ## Scope
 
@@ -47,13 +49,15 @@ Out of scope:
 
 | Path | Purpose |
 |---|---|
-| `pyproject.toml` | uv project. Pins `llm2jev[mlx]==0.6.1` exactly, and jevbench as a git dependency pinned to commit `1bcc55e`. |
-| `preset.toml` | The single config: model id, backend `mlx`, prompt `chat`, host, port. |
+| `pyproject.toml` | uv project. Pins exactly: `llm2jev[mlx]==0.6.1`, `mlx-lm==0.31.3`, `transformers==5.17.0`. Installs jevbench as a path dependency from `vendor/jevbench`. |
+| `vendor/jevbench/` | Git submodule of `fstandhartinger/jevbench` pinned to commit `1bcc55e`. The one source for both the harness code and `datasets/public/*.jsonl`; the installed jevbench package ships without the datasets. |
+| `preset.toml` | The single config: model id, model revision `2d20e8e672ce892d50f7265bfd3fc9b59b718f2a`, backend `mlx`, prompt `chat`, host, port. |
+| `fetch_model.sh` | Downloads the model at the preset revision (`hf download --revision`) to a local directory. `serve.sh` and `check.py` pass that path as `--model`, so the weights can't drift. |
 | `serve.sh` | Runs the llm2jev CLI with values from the preset. No wrapper code. |
 | `check.py` | Preflight checks (see below). Exits non-zero on any failure. |
 | `bench.sh` | End-to-end bench run (see Eval flow). |
 | `results/<YYYY-MM-DD>-minicpm5-2b-8bit/` | Raw responses, per-file `results.jsonl`, ledger, `summary.json`, `env.json`. Committed. |
-| `make_results.py` | Builds `RESULTS.md` from the `summary.json` files. |
+| `make_results.py` | Builds `summary.json` and `RESULTS.md` from the run's task and result files (see Results table). |
 | `RESULTS.md` | Generated table: our row beside the llm2jev Qwen reference rows. |
 | `README.md`, `LICENSE` (MIT), `tests/` | Standard. |
 
@@ -79,7 +83,8 @@ path (the same render function the server uses). It fails if:
 The steps run in order. The first failure aborts with the failing step's name
 and its log path. There are no retries.
 
-1. Run `check.py`.
+1. Run `fetch_model.sh` (no-op when the pinned revision is already local),
+   then `check.py`.
 2. Start `serve.sh` in the background and poll `/health` with a 120 s
    timeout.
 3. Smoke test: run the jevbench `typesafe` adapter on one item each of type
@@ -87,9 +92,11 @@ and its log path. There are no retries.
 4. Run the full bench on `original`, `easy` and `hard` with: typesafe
    adapter, the local endpoint, empty key env, reserve 0 USD, cost basis
    `self_hosted_local`. Output goes to `results/<run>/`.
-5. Run `jevbench.cli summarize` per file and write `summary.json`.
-6. Write `env.json`: chip, RAM, macOS version, Python version, llm2jev and
-   mlx-lm versions, the model's HF revision hash, the jevbench commit.
+5. Run `make_results.py` to write `summary.json` and regenerate
+   `RESULTS.md`.
+6. Write `env.json`: chip, RAM, macOS version, Python version, llm2jev,
+   mlx-lm and transformers versions, the model revision, the jevbench
+   submodule commit.
 7. A `trap` stops the server on every exit path.
 
 ## Error handling
@@ -101,16 +108,28 @@ and its log path. There are no retries.
 
 ## Results table (`RESULTS.md`)
 
+`make_results.py` computes every metric through jevbench's own
+`summarize.metric()`, so the definitions match official scoring:
+- once per tier (original, easy, hard) on that tier's task and result files;
+- once for the combined public set, on the three task files and the three
+  result files joined together.
+
+The harness reports no confidence interval, so `make_results.py` adds a
+Wilson 95% interval computed from `n_correct` and `n_scorable`.
+
 Per model row:
-- Public accuracy (231) with its 95% CI.
+- Public accuracy (231) with its Wilson 95% CI.
 - Hard-111 accuracy.
 - ECE and Brier score.
 - p50 and p95 latency.
 - Item failure count.
 
-The llm2jev Qwen rows are copied with attribution and a note that their
-latency came from A100s, while ours came from an M1 Max (32 GB).
-`make_results.py` builds the table.
+The llm2jev Qwen rows are copied with attribution, in a separate
+"reference, different harness, not like-for-like" block. The note says they
+were produced by the private baby-jev harness on A100s, while ours come from
+the official harness on an M1 Max (32 GB).
+A like-for-like Qwen row, made by rerunning an MLX Qwen3.5-4B through this
+pipeline, is optional and not part of this spec's success criteria.
 
 ## Testing
 
@@ -118,8 +137,9 @@ latency came from A100s, while ours came from an M1 Max (32 GB).
 
 - Preflight logic, tested against the real MiniCPM5 tokenizer: single-token
   letters, and no `<think>` in the rendered prompt.
-- `make_results.py`, tested against a small fixture of
-  `summary.json` data.
+- `make_results.py`, tested against small fixtures of tasks and results:
+  combined and per-tier numbers agree with `summarize.metric()`, and the
+  Wilson interval matches known values.
 - The server and the full bench are not unit-tested. Step 3 (smoke test) of
   every bench run covers them.
 
@@ -130,8 +150,8 @@ latency came from A100s, while ours came from an M1 Max (32 GB).
 - `bench.sh` completes all 231 public items and commits results plus
   `env.json`.
 - `RESULTS.md` shows the MiniCPM5-2B-8bit row beside the reference rows.
-- A fresh clone plus `uv sync` plus `bash bench.sh` reproduces the accuracy
-  within the reported CI.
+- A fresh clone plus `git submodule update --init` plus `uv sync` plus
+  `bash bench.sh` reproduces the accuracy within the reported CI.
 
 ## Hosting
 
