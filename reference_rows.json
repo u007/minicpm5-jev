@@ -1,0 +1,9 @@
+{
+  "note": "baby-jev harness, A100, not like-for-like",
+  "source": "https://github.com/tic-top/anyjev",
+  "rows": [
+    {"model": "Qwen3.5-4B", "public_accuracy": 0.740, "hard_accuracy": 0.595},
+    {"model": "Qwen3.5-9B", "public_accuracy": 0.810, "hard_accuracy": 0.667},
+    {"model": "Qwen3.5-27B", "public_accuracy": 0.879, "hard_accuracy": 0.775}
+  ]
+}

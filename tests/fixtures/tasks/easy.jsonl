@@ -1,0 +1,2 @@
+{"id": "e1", "family": "test", "state": "state-e1", "question": {"type": "noul", "instructions": "i", "criteria": null}, "labels": ["no", "yes"], "expected": "yes", "split": "public"}
+{"id": "e2", "family": "test", "state": "state-e2", "question": {"type": "noul", "instructions": "i", "criteria": null}, "labels": ["no", "yes"], "expected": "no", "split": "public"}
