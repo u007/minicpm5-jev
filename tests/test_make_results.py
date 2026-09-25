@@ -1,4 +1,5 @@
 import json
+import shutil
 import subprocess
 import sys
 from pathlib import Path
@@ -7,6 +8,7 @@ import pytest
 from jevbench.summarize import metric
 from jevbench.tasks import load_jsonl
 
+import make_results
 from make_results import render_table, summarize_run, wilson
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -94,6 +96,7 @@ def test_render_table_contains_our_row_and_reference_block():
     assert f"{hi:.3f}" in table
     assert f"{hard['accuracy']:.3f}" in table
     assert "ECE" in table
+    assert f"{public['ece']['ece']:.3f}" in table
     assert "Brier" in table
     assert f"{public['brier_mean']:.3f}" in table
     assert f"{public['latency']['p50_s']:.3f}" in table
@@ -103,6 +106,49 @@ def test_render_table_contains_our_row_and_reference_block():
     assert "Qwen3.5-4B" in table
     assert "0.740" in table
     assert "0.595" in table
+
+
+def test_main_writes_summary_and_rebuilds_results_md_from_summaries_alone(monkeypatch, tmp_path):
+    results_dir = tmp_path / "results"
+    results_md = tmp_path / "RESULTS.md"
+    monkeypatch.setattr(make_results, "RESULTS_DIR", results_dir)
+    monkeypatch.setattr(make_results, "RESULTS_MD_PATH", results_md)
+    monkeypatch.setattr(make_results, "DATASET_DIR", FIXTURES / "tasks")
+    monkeypatch.setattr(make_results, "TIERS", ("easy", "hard"))
+
+    run_dir = results_dir / "2026-09-26-fixture"
+    shutil.copytree(FIXTURES / "run", run_dir)
+    (run_dir / "env.json").write_text(json.dumps({"chip": "Apple M1 Max"}))
+
+    monkeypatch.setattr(sys, "argv", ["make_results.py", str(run_dir)])
+    make_results.main()
+
+    summary = json.loads((run_dir / "summary.json").read_text())
+    assert summary["run"] == "2026-09-26-fixture"
+    assert summary["chip"] == "Apple M1 Max"
+
+    reference_rows = json.loads(make_results.REFERENCE_ROWS_PATH.read_text())
+    expected = render_table([summary], reference_rows)
+    assert results_md.read_text() == expected
+
+
+def test_main_regenerates_results_md_sorted_by_run_name(monkeypatch, tmp_path):
+    results_dir = tmp_path / "results"
+    results_md = tmp_path / "RESULTS.md"
+    monkeypatch.setattr(make_results, "RESULTS_DIR", results_dir)
+    monkeypatch.setattr(make_results, "RESULTS_MD_PATH", results_md)
+    monkeypatch.setattr(make_results, "DATASET_DIR", FIXTURES / "tasks")
+    monkeypatch.setattr(make_results, "TIERS", ("easy", "hard"))
+
+    for run_name in ("2026-09-26-later-run", "2026-01-01-earlier-run"):
+        run_dir = results_dir / run_name
+        shutil.copytree(FIXTURES / "run", run_dir)
+        (run_dir / "env.json").write_text(json.dumps({"chip": "Apple M1 Max"}))
+        monkeypatch.setattr(sys, "argv", ["make_results.py", str(run_dir)])
+        make_results.main()
+
+    text = results_md.read_text()
+    assert text.index("2026-01-01-earlier-run") < text.index("2026-09-26-later-run")
 
 
 def test_main_wrong_arg_count_exits_nonzero_with_usage():
