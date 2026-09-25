@@ -108,6 +108,16 @@ def test_render_table_contains_our_row_and_reference_block():
     assert "0.595" in table
 
 
+def test_render_table_raises_on_none_metric_value():
+    result = summarize_run(FIXTURES / "run", TIER_PATHS)
+    summary = {"run": "2026-09-26-test-run", "chip": "Apple M1 Max", **result}
+    summary["public"]["brier_mean"] = None
+    reference_rows = json.loads((REPO_ROOT / "reference_rows.json").read_text())
+
+    with pytest.raises(ValueError):
+        render_table([summary], reference_rows)
+
+
 def test_main_writes_summary_and_rebuilds_results_md_from_summaries_alone(monkeypatch, tmp_path):
     results_dir = tmp_path / "results"
     results_md = tmp_path / "RESULTS.md"

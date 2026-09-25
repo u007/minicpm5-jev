@@ -64,7 +64,9 @@ def summarize_run(run_dir, tier_paths):
 
 
 def _fmt(x, nd=3):
-    return "n/a" if x is None else f"{x:.{nd}f}"
+    if x is None:
+        raise ValueError("_fmt: cannot format None")
+    return f"{x:.{nd}f}"
 
 
 def render_table(summaries, reference_rows):
@@ -90,9 +92,11 @@ def render_table(summaries, reference_rows):
         )
     lines += [
         "",
-        "## Reference (baby-jev harness, A100, not like-for-like)",
+        f"Produced with the official `jevbench` harness on {summaries[-1]['chip']} (32 GB).",
         "",
-        f"Source: {reference_rows['source']}",
+        "## Reference",
+        "",
+        f"Sources: {', '.join(reference_rows['sources'])}",
         "",
         f"Note: {reference_rows['note']}",
         "",

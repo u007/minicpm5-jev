@@ -6,9 +6,11 @@
 |---|---|---|---|---|---|---|---|---|
 | 2026-09-26-minicpm5-2b-8bit | Apple M1 Max | 0.580 (0.516, 0.642) | 0.459 | 0.266 | 0.634 | 0.186 | 2.868 | 0 |
 
-## Reference (baby-jev harness, A100, not like-for-like)
+Produced with the official `jevbench` harness on Apple M1 Max (32 GB).
 
-Source: https://github.com/tic-top/anyjev
+## Reference
+
+Sources: https://github.com/tic-top/anyjev, https://github.com/tic-top/anyjev/blob/main/scripts/bench.sh
 
 Note: baby-jev harness, A100, not like-for-like
 
