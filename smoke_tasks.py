@@ -24,7 +24,7 @@ def pick_smoke(paths: list) -> list:
                 record = json.loads(line)
                 qtype = record["question"]["type"]
                 if qtype not in QUESTION_TYPES:
-                    continue
+                    raise ValueError(f"unknown question type: {qtype!r}")
                 if qtype not in seen_types:
                     seen_types.add(qtype)
                     picked.append(record)

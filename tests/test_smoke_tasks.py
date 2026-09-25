@@ -64,7 +64,7 @@ def test_pick_smoke_returns_first_match_in_file_order(tmp_path):
     assert noul["marker"] == "first"
 
 
-def test_pick_smoke_ignores_unrecognized_question_types(tmp_path):
+def test_pick_smoke_raises_on_unrecognized_question_type(tmp_path):
     fixture = tmp_path / "with_unknown.jsonl"
     fixture.write_text(
         "\n".join(
@@ -79,10 +79,8 @@ def test_pick_smoke_ignores_unrecognized_question_types(tmp_path):
         + "\n"
     )
 
-    records = pick_smoke([str(fixture)])
-
-    assert len(records) == 3
-    assert {r["question"]["type"] for r in records} == {"noul", "choice", "score"}
+    with pytest.raises(ValueError, match="unknown"):
+        pick_smoke([str(fixture)])
 
 
 def test_main_wrong_arg_count_exits_non_zero(tmp_path):
