@@ -5,6 +5,9 @@ decision service via [llm2jev](https://github.com/tic-top/anyjev), and
 reproduces JevBench public-item numbers for that model using the official
 [jevbench](https://github.com/fstandhartinger/jevbench) harness.
 
+**Headline:** 0.580 accuracy (95% CI 0.516–0.642) on the 231 public JevBench
+items, running on an Apple M1 Max (see [Results](#results)).
+
 Credits: [llm2jev](https://github.com/tic-top/anyjev) (MIT), [jevbench](https://github.com/fstandhartinger/jevbench)
 (MIT), [OpenBMB MiniCPM5](https://huggingface.co/openbmb/MiniCPM5-2B) (Apache-2.0),
 and the [mlx-community](https://huggingface.co/mlx-community) 8-bit MLX build.
@@ -96,7 +99,19 @@ Response:
 
 ## Results
 
-See [RESULTS.md](./RESULTS.md) for the full table.
+JevBench public items, MiniCPM5-2B-8bit on an Apple M1 Max (32 GB), official
+`jevbench` harness, 0 failed items:
+
+| Tier | Items | Accuracy | 95% CI (Wilson) | ECE | Brier | p50 (s) | p95 (s) |
+|---|---|---|---|---|---|---|---|
+| **Public (all)** | 231 | **0.580** | 0.516–0.642 | 0.266 | 0.634 | 0.186 | 2.868 |
+| original | 72 | 0.528 | 0.414–0.639 | 0.346 | 0.764 | 0.156 | 0.185 |
+| easy | 48 | 0.938 | 0.832–0.979 | 0.025 | 0.085 | 0.156 | 0.174 |
+| hard | 111 | 0.459 | 0.370–0.552 | 0.346 | 0.786 | 0.801 | 3.250 |
+
+Chance level (mean of 1/number of options per item) is 0.311 for original,
+0.284 for easy and 0.336 for hard. See [RESULTS.md](./RESULTS.md) for the
+generated table with the Qwen3.5 reference rows.
 
 The committed run (`results/2026-09-26-minicpm5-2b-8bit/`) took 3m16s wall
 time (`time bash bench.sh` measured 3:15.69) on an Apple M1 Max (32 GB).
