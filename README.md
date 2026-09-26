@@ -6,7 +6,8 @@ reproduces JevBench public-item numbers for that model using the official
 [jevbench](https://github.com/fstandhartinger/jevbench) harness.
 
 **Headline:** 0.580 accuracy (95% CI 0.516–0.642) on the 231 public JevBench
-items, running on an Apple M1 Max (see [Results](#results)).
+items, running on an Apple M1 Max, vs 0.866 for TypeSafe's hosted Jev 1.13.0 on
+the same items (see [Results](#results)).
 
 Credits: [llm2jev](https://github.com/tic-top/anyjev) (MIT), [jevbench](https://github.com/fstandhartinger/jevbench)
 (MIT), [OpenBMB MiniCPM5](https://huggingface.co/openbmb/MiniCPM5-2B) (Apache-2.0),
@@ -108,6 +109,35 @@ JevBench public items, MiniCPM5-2B-8bit on an Apple M1 Max (32 GB), official
 | original | 72 | 0.528 | 0.414–0.639 | 0.346 | 0.764 | 0.156 | 0.185 |
 | easy | 48 | 0.938 | 0.832–0.979 | 0.025 | 0.085 | 0.156 | 0.174 |
 | hard | 111 | 0.459 | 0.370–0.552 | 0.346 | 0.786 | 0.801 | 3.250 |
+
+### vs TypeSafe Jev 1.13.0 (same 231 items)
+
+JevBench publishes per-item outcomes for TypeSafe's hosted Jev 1.13.0 on
+exactly these public items
+(`vendor/jevbench/results/v1.2/jevbench-v1.2-per-task.json`, system
+`jev-1.13.0`). Scoring both on the same item ids:
+
+| Tier | Items | Jev 1.13.0 | MiniCPM5-2B-8bit (this repo) | Gap |
+|---|---|---|---|---|
+| **Public (all)** | 231 | **0.866** (0.816–0.904) | **0.580** (0.516–0.642) | −0.286 |
+| original | 72 | 0.986 (0.925–0.998) | 0.528 (0.414–0.639) | −0.458 |
+| easy | 48 | 1.000 (0.926–1.000) | 0.938 (0.832–0.979) | −0.062 |
+| hard | 111 | 0.730 (0.640–0.804) | 0.459 (0.370–0.552) | −0.271 |
+
+Accuracy with Wilson 95% CI. Per item: both correct on 127, Jev only on 73,
+MiniCPM5 only on 7, neither on 24.
+
+How to read it:
+- Jev is a closed, hosted model measured by the JevBench maintainers through
+  its API (median 0.67 s per decision, network from Germany included). The
+  MiniCPM5 row is a 2.5B open model running locally in 8-bit on a laptop
+  (median 0.19 s).
+- The gap is smallest on the easy tier and largest on original, where
+  MiniCPM5's all-"no" bias on yes/no items (below) costs it most.
+- Jev's outcomes come from the maintainers' v1.2/v1.3 runs; ours from the
+  harness at `1bcc55e`. Both score the argmax against the same expected
+  labels, so accuracy is comparable; calibration and latency are not
+  measured the same way and are left out of this table.
 
 Chance level (mean of 1/number of options per item) is 0.311 for original,
 0.284 for easy and 0.336 for hard. See [RESULTS.md](./RESULTS.md) for the
