@@ -1,0 +1,2 @@
+{"task_id": "h1", "ok": true, "valid": true, "correct": true, "probs": {"no": 0.1, "yes": 0.9}, "latency_s": 0.9}
+{"task_id": "h2", "ok": false, "valid": false, "correct": false, "latency_s": 1.4}

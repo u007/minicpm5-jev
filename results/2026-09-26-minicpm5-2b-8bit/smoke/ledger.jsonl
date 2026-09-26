@@ -1,0 +1,7 @@
+{"event": "cap", "cap_usd": 15.0, "ts": 1790357702.335731}
+{"event": "reserve", "reservation_id": "759a4f385e324c9bab6bb6b6204150a8", "reserved_usd": 0.0, "ts": 1790357702.3358579, "meta": {"task_id": "original-policy-01-0", "adapter": "typesafe"}}
+{"event": "settle", "reservation_id": "759a4f385e324c9bab6bb6b6204150a8", "charged_usd": 0.0, "ts": 1790357702.528621, "meta": {"task_id": "original-policy-01-0", "basis": "self_hosted_local"}}
+{"event": "reserve", "reservation_id": "d820a64620bb4864b57271cc8db8af51", "reserved_usd": 0.0, "ts": 1790357702.53058, "meta": {"task_id": "original-intent-01-0", "adapter": "typesafe"}}
+{"event": "settle", "reservation_id": "d820a64620bb4864b57271cc8db8af51", "charged_usd": 0.0, "ts": 1790357702.697284, "meta": {"task_id": "original-intent-01-0", "basis": "self_hosted_local"}}
+{"event": "reserve", "reservation_id": "7c35964b08274edb82e0503a82b130c8", "reserved_usd": 0.0, "ts": 1790357702.702602, "meta": {"task_id": "original-ordinal-01-0", "adapter": "typesafe"}}
+{"event": "settle", "reservation_id": "7c35964b08274edb82e0503a82b130c8", "charged_usd": 0.0, "ts": 1790357702.865015, "meta": {"task_id": "original-ordinal-01-0", "basis": "self_hosted_local"}}
